@@ -1,0 +1,13 @@
+Package: dataLove
+Type: Package
+Title: A collection of high-level R functions to make data manipulation a
+    breeze. Relies heavily on the Hadleyverse packages.
+Version: 0.0.1
+Date: 2014-03-12
+Author: Love Hansson
+Maintainer: Love Hansson <love.hansson@gmail.com>
+Description: A collection of high-level R functions to make data manipulation a
+    breeze. Relies heavily on the Hadleyverse packages.
+Imports:
+    data.table
+License: AGPL-3
