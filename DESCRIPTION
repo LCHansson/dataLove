@@ -9,5 +9,6 @@ Maintainer: Love Hansson <love.hansson@gmail.com>
 Description: A collection of high-level R functions to make data manipulation a
     breeze. Relies heavily on the Hadleyverse packages.
 Imports:
-    data.table
+    data.table,
+    stringr
 License: AGPL-3
