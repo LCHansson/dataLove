@@ -56,19 +56,16 @@ findNameColumns <- function(.data, names = NULL) {
 findCategories <- function(.data, category_scale_threshold = 0.20, assume_numerics_not_category = TRUE) {
   classes <- sapply(.data, class)
   
-  for (c in classes) {
-    print(c)
-  }
-  
   metadata <- lapply(.data, function(col) {
     column_class = class(col)
+    unique_to_length_ratio = format(length(unique(col)) / length(col), digits = 4)
     probably_category = ifelse(
       column_class %in% c("character", "factor") | !assume_numerics_not_category,
-      length(unique(col)) / length(col) <= category_scale_threshold,
+      unique_to_length_ratio <= category_scale_threshold,
       FALSE
     )
     
-    c(column_class = column_class, probably_category = probably_category)
+    c(column_class = column_class, unique_to_length_ratio = unique_to_length_ratio, probably_category = probably_category)
   }) %>%
     data.frame %>%
     t %>%
@@ -76,7 +73,61 @@ findCategories <- function(.data, category_scale_threshold = 0.20, assume_numeri
     tbl_df
   metadata <- metadata %>%
     mutate(column_name = row.names(metadata)) %>%
-    select(column_name, column_class, probably_category)
+    select(column_name, column_class, unique_to_length_ratio, probably_category)
   
   metadata
+}
+
+#' @export
+findOutliers <- function(
+  .data,
+  number_of_observations = 5,
+  connections = 1,
+  outlier_sd_threshold = 3
+) {
+  metadata <- findCategories(.data, category_scale_threshold = 0.1)
+  
+  cols <- metadata %>% filter(probably_category == FALSE & column_class %in% c("numeric", "integer")) %>%
+    select(column_name) %>% `[[`(1)
+  
+  scoredData <- .data[,cols] %>% scores(type = "z") %>% tbl_df
+  
+  lower <- sapply(names(scoredData), function(nm) {
+    #     data.frame(
+    data = head(.data[order(scoredData[[nm]]),nm] , n = 5L)
+    #       outlier_rank = head(scoredData[order(scoredData[[nm]]),nm], n = 5L)
+    #     )
+  }) %>%
+    data.frame %>% tbl_df
+
+  upper <- sapply(names(scoredData), function(nm) {
+    #     data.frame(
+    data = head(.data[order(scoredData[[nm]], decreasing = TRUE),nm] , n = 5L)
+    #       outlier_rank = head(scoredData[order(scoredData[[nm]], decreasing = TRUE),nm], n = 5L)
+    #     )
+  }) %>%
+    data.frame %>% tbl_df
+  
+}
+
+
+#' @export
+findClusters <- function(.data, method = c("kmeans"), k = 5) {
+  if (any(colSums(is.na(.data)) > 0))
+    warning("Cannot perform clustering on columns with NA, so dropping any columns with NA in them.")
+  .data <- .data[,colSums(is.na(.data)) == 0]
+
+  metadata <- findCategories(.data, category_scale_threshold = 0.1)
+  
+  cols <- metadata %>% filter(probably_category == FALSE & column_class %in% c("numeric", "integer")) %>%
+    select(column_name) %>% `[[`(1)
+  
+  cluster_data <- .data[,cols]
+  centered_data <- kmeans(cluster_data, centers = k)
+  
+  .data <- .data %>%
+    mutate(cluster = factor(centered_data$cluster)) %>%
+    tbl_df
+  
+  .data
 }
