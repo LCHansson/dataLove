@@ -51,3 +51,32 @@ findNameColumns <- function(.data, names = NULL) {
   
   NULL
 }
+
+#' @export
+findCategories <- function(.data, category_scale_threshold = 0.20, assume_numerics_not_category = TRUE) {
+  classes <- sapply(.data, class)
+  
+  for (c in classes) {
+    print(c)
+  }
+  
+  metadata <- lapply(.data, function(col) {
+    column_class = class(col)
+    probably_category = ifelse(
+      column_class %in% c("character", "factor") | !assume_numerics_not_category,
+      length(unique(col)) / length(col) <= category_scale_threshold,
+      FALSE
+    )
+    
+    c(column_class = column_class, probably_category = probably_category)
+  }) %>%
+    data.frame %>%
+    t %>%
+    data.frame %>%
+    tbl_df
+  metadata <- metadata %>%
+    mutate(column_name = row.names(metadata)) %>%
+    select(column_name, column_class, probably_category)
+  
+  metadata
+}
