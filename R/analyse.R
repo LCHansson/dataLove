@@ -54,11 +54,19 @@ findNameColumns <- function(.data, names = NULL) {
 
 #' @export
 findCategories <- function(.data, category_scale_threshold = 0.20, assume_numerics_not_category = TRUE) {
-  classes <- sapply(.data, class)
+  classes <- sapply(.data, function(x) {
+    cl <- class(x)
+    if ("ordered" %in% cl)
+      cl <- cl[!cl %in% "ordered"]
+    
+    cl
+  })
   
   metadata <- lapply(.data, function(col) {
     column_class = class(col)
-    unique_to_length_ratio = format(length(unique(col)) / length(col), digits = 4)
+    if ("ordered" %in% column_class)
+      column_class <- column_class[!column_class %in% "ordered"]
+    unique_to_length_ratio = length(unique(col)) / length(col)
     probably_category = ifelse(
       column_class %in% c("character", "factor") | !assume_numerics_not_category,
       unique_to_length_ratio <= category_scale_threshold,

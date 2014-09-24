@@ -1,5 +1,15 @@
 #' @export
-clusterVis <- function(.data, cluster_column = "cluster") {
+visCluster <- function(.data, cluster_column = "cluster") {
+  if (!cluster_column %in% names(.data))
+    stop("Name of cluster column not in data")
+  if (!any(c("factor", "character") %in% class(.data[[cluster_column]])))
+    stop("Cluster column is not a factor or a character column")
+  
+  visualise(.data, layer_points())
+}
+
+#
+visualise <- function(.data, layer = layer_points()) {
   
   metadata <- findCategories(.data, category_scale_threshold = 0.1)
   
