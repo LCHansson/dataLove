@@ -4,20 +4,20 @@
 #' 
 #' @export
 
-analyse <- function(.data) {
+analyse <- function (.data) {
   NULL
 }
 
 
 
 #' @export
-dataSummary <- function(.data) {
+dataSummary <- function (.data) {
   NULL
 }
 
 
 #' @export
-viewList <- function(.list, recursionLevel, offset = 0) {
+viewList <- function (.list, recursionLevel, offset = 0) {
   if (missing(recursionLevel)) { recursionLevel <- 0 }
   
   for (i in 1:length(.list)) {
@@ -44,17 +44,31 @@ viewList <- function(.list, recursionLevel, offset = 0) {
 
 
 #' @export
-findNameColumns <- function(.data, names = NULL) {
-  if (is.null(names)) {
-    names <- c("namn", "name", "nom")
+findNameColumns <- function (.data, name_strings = NULL, regex = FALSE, return_vector = FALSE) {
+  if (is.null(name_strings)) {
+    name_strings <- c("namn", "name", "nom", "id")
   }
   
-  NULL
+  nms <- tolower(names(.data))
+  
+  are_probably_names <- nms %>% sapply(function (x) {
+    if (regex) {
+      x %>% str_detect(name_strings) %>% any
+    } else {
+      return(x %in% name_strings)
+    }
+  })
+  
+  if (return_vector)
+    return(are_probably_names)
+  else
+    return(nms[are_probably_names])
 }
 
+
 #' @export
-findCategories <- function(.data, category_scale_threshold = 0.20, assume_numerics_not_category = TRUE) {
-  classes <- sapply(.data, function(x) {
+findCategories <- function (.data, category_scale_threshold = 0.20, assume_numerics_not_category = TRUE) {
+  classes <- sapply(.data, function (x) {
     cl <- class(x)
     if ("ordered" %in% cl)
       cl <- cl[!cl %in% "ordered"]
@@ -62,7 +76,7 @@ findCategories <- function(.data, category_scale_threshold = 0.20, assume_numeri
     cl
   })
   
-  metadata <- lapply(.data, function(col) {
+  metadata <- lapply(.data, function (col) {
     column_class = class(col)
     if ("ordered" %in% column_class)
       column_class <- column_class[!column_class %in% "ordered"]
@@ -81,13 +95,14 @@ findCategories <- function(.data, category_scale_threshold = 0.20, assume_numeri
     tbl_df
   metadata <- metadata %>%
     mutate(column_name = row.names(metadata)) %>%
-    select(column_name, column_class, unique_to_length_ratio, probably_category)
+    select(column_name, column_class, unique_to_length_ratio, probably_category) %>%
+    mutate(probably_name = findNameColumns(.data, return_vector = TRUE))
   
   metadata
 }
 
 #' @export
-findOutliers <- function(
+findOutliers <- function (
   .data,
   number_of_observations = 5,
   connections = 1,
@@ -100,7 +115,7 @@ findOutliers <- function(
   
   scoredData <- .data[,cols] %>% scores(type = "z") %>% tbl_df
   
-  lower <- sapply(names(scoredData), function(nm) {
+  lower <- sapply(names(scoredData), function (nm) {
     #     data.frame(
     data = head(.data[order(scoredData[[nm]]),nm] , n = 5L)
     #       outlier_rank = head(scoredData[order(scoredData[[nm]]),nm], n = 5L)
@@ -108,7 +123,7 @@ findOutliers <- function(
   }) %>%
     data.frame %>% tbl_df
 
-  upper <- sapply(names(scoredData), function(nm) {
+  upper <- sapply(names(scoredData), function (nm) {
     #     data.frame(
     data = head(.data[order(scoredData[[nm]], decreasing = TRUE),nm] , n = 5L)
     #       outlier_rank = head(scoredData[order(scoredData[[nm]], decreasing = TRUE),nm], n = 5L)
@@ -120,7 +135,7 @@ findOutliers <- function(
 
 
 #' @export
-findClusters <- function(.data, method = c("kmeans"), k = 5) {
+findClusters <- function (.data, method = c("kmeans"), k = 5) {
   if (any(colSums(is.na(.data)) > 0))
     warning("Cannot perform clustering on columns with NA, so dropping any columns with NA in them.")
   .data <- .data[,colSums(is.na(.data)) == 0]

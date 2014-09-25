@@ -1,3 +1,8 @@
+library(dplyr)
+library(stringr)
+
+source("examples//data//load_example_data.R")
+
 # Get metadata and find potential categories in data
 metadata <- findCategories(val2006R)
 metadata
