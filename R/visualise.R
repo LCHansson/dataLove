@@ -8,7 +8,7 @@ visCluster <- function(.data, cluster_column = "cluster") {
   visualise(.data, layer_points())
 }
 
-#
+#' @export
 visualise <- function(.data, layer = layer_points()) {
   
   metadata <- findCategories(.data, category_scale_threshold = 0.1)
