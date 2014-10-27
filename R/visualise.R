@@ -1,3 +1,7 @@
+#' Visualise
+#' 
+#' Visualise data 
+#' 
 #' @export
 visCluster <- function(.data, cluster_column = "cluster") {
   if (!cluster_column %in% names(.data))
@@ -8,7 +12,7 @@ visCluster <- function(.data, cluster_column = "cluster") {
   visualise(.data, layer_points())
 }
 
-#
+#' @export
 visualise <- function(.data, layer = layer_points()) {
   
   metadata <- findCategories(.data, category_scale_threshold = 0.1)
